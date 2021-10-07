@@ -5,8 +5,8 @@
         "headers": {
             "Authorization": {
                 "type":"Basic", 
-                "username": "fadelrahman10", 
-                "password":"quipper123"
+                "username": "someuser", 
+                "password":"somepassword"
             }
         },
         "body": {
