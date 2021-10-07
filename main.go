@@ -5,10 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	vegeta "github.com/tsenart/vegeta/lib"
@@ -57,8 +55,6 @@ func main() {
 	var metrics vegeta.Metrics
 	rate := vegeta.Rate{Freq: 100, Per: time.Second}
 	duration := 4 * time.Second
-	file, err := os.Create("result.html")
-	var out io.Writer
 	for _, v := range cfg.Tergets {
 
 		targeter := vegeta.NewStaticTargeter(vegeta.Target{
@@ -66,24 +62,16 @@ func main() {
 			URL:    v.URL,
 			Header: http.Header{"Authorization": []string{fmt.Sprintf("%s %s", "Token", token.AccessToken)}},
 		})
-		if err != nil {
-			log.Fatal("error create file result", err.Error())
-		}
-		defer file.Close()
-		out = file
+
 		for res := range attacker.Attack(targeter, rate, duration, "Big Bang!") {
 			metrics.Add(res)
 		}
 		metrics.Close()
 
-		report := vegeta.NewHDRHistogramPlotReporter(&metrics)
 		fmt.Printf("========== Target %s ============\n", v.URL)
 		fmt.Printf("%+v \n", metrics.Latencies)
 		fmt.Printf("rate of sent requests per second : %f\n", metrics.Rate)
-		err = report.Report(out)
-		if err != nil {
-			log.Fatal(err)
-		}
+
 	}
 
 }
