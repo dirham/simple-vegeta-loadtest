@@ -1,0 +1,89 @@
+package main
+
+import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	vegeta "github.com/tsenart/vegeta/lib"
+)
+
+type Token struct {
+	AccessToken string `json:"access_token,omitempty"`
+	UserId      string `json:"user_id,omitempty"`
+	Expires_in  int    `json:"expires_in,omitempty"`
+	Message     string `json:"message,omitempty"`
+}
+
+func main() {
+	// load config.json
+	cfg := LoadConfiguration("config.json")
+	var token Token
+
+	if cfg.EnableTokenGen {
+		// prepare for get accesstoken
+		body, err := json.Marshal(cfg.TokenGenAttr.Body)
+		if err != nil {
+			log.Fatal(fmt.Sprintf("Error Found: %s", err.Error()))
+		}
+		reqBody := bytes.NewReader(body)
+		// peform http request to get token
+		head := make(map[string]string)
+
+		sEnc := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfg.TokenGenAttr.Headers.Authorization.Username, cfg.TokenGenAttr.Headers.Authorization.Password)))
+		head["Authorization"] = fmt.Sprintf("%s %s", cfg.TokenGenAttr.Headers.Authorization.Type, sEnc)
+		var heads []map[string]string
+		heads = append(heads, head)
+		tokenRes := PostHttp(cfg.TokenGenAttr.URL, reqBody, 5, heads)
+
+		defer tokenRes.Body.Close()
+
+		err = json.NewDecoder(tokenRes.Body).Decode(&token)
+		if err != nil {
+			log.Fatal("Got Error decode response ", err.Error())
+		}
+		log.Printf("%v", token)
+	}
+
+	// peform others url with vegeta test
+	attacker := vegeta.NewAttacker()
+
+	var metrics vegeta.Metrics
+	rate := vegeta.Rate{Freq: 100, Per: time.Second}
+	duration := 4 * time.Second
+	file, err := os.Create("result.html")
+	var out io.Writer
+	for _, v := range cfg.Tergets {
+
+		targeter := vegeta.NewStaticTargeter(vegeta.Target{
+			Method: "GET",
+			URL:    v.URL,
+			Header: http.Header{"Authorization": []string{fmt.Sprintf("%s %s", "Token", token.AccessToken)}},
+		})
+		if err != nil {
+			log.Fatal("error create file result", err.Error())
+		}
+		defer file.Close()
+		out = file
+		for res := range attacker.Attack(targeter, rate, duration, "Big Bang!") {
+			metrics.Add(res)
+		}
+		metrics.Close()
+
+		report := vegeta.NewHDRHistogramPlotReporter(&metrics)
+		fmt.Printf("========== Target %s ============\n", v.URL)
+		fmt.Printf("%+v \n", metrics.Latencies)
+		fmt.Printf("rate of sent requests per second : %f\n", metrics.Rate)
+		err = report.Report(out)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+}

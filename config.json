@@ -1,0 +1,26 @@
+{
+    "enable_token_gen": true,
+    "token_gen_attr":  {
+        "url": "https://api-develop.quipper.net/v1/authorizations",
+        "headers": {
+            "Authorization": {
+                "type":"Basic", 
+                "username": "fadelrahman10", 
+                "password":"quipper123"
+            }
+        },
+        "body": {
+            "client_id": "qlearn",
+            "client_secret": "dfjsdj"
+        }
+    },
+    "tergets": [
+        {
+            "url": "https://httpbin.org/get"
+        },
+        {
+            "url": "mockbin.org/request"
+        }
+    ],
+    "output_filename": "plot.html"
+}
