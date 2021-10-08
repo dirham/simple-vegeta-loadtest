@@ -23,7 +23,8 @@ type Config struct {
 		} `json:"body"`
 	} `json:"token_gen_attr"`
 	Tergets []struct {
-		URL string `json:"url"`
+		URL   string `json:"url"`
+		Token string `json:"token"`
 	} `json:"tergets"`
 }
 

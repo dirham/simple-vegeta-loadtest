@@ -60,7 +60,7 @@ func main() {
 		targeter := vegeta.NewStaticTargeter(vegeta.Target{
 			Method: "GET",
 			URL:    v.URL,
-			Header: http.Header{"Authorization": []string{fmt.Sprintf("%s %s", "Token", token.AccessToken)}},
+			Header: http.Header{"Authorization": []string{fmt.Sprintf("%s %s", "Token", v.Token)}},
 		})
 
 		for res := range attacker.Attack(targeter, rate, duration, "Big Bang!") {
@@ -69,7 +69,12 @@ func main() {
 		metrics.Close()
 
 		fmt.Printf("========== Target %s ============\n", v.URL)
-		fmt.Printf("%+v \n", metrics.Latencies)
+		fmt.Printf("Total latencie: %s \n", metrics.Latencies.Total)
+		fmt.Printf("Mean latencie: %s \n", metrics.Latencies.Mean)
+		fmt.Printf("maximum observed request latency: %s \n", metrics.Latencies.Max)
+		fmt.Printf("Duration of the request attack: %s \n", metrics.Duration)
+		fmt.Printf("Throughput is the rate of successful requests per second: %f \n", metrics.Throughput)
+		fmt.Printf("Success is the percentage of non-error responses: %f \n", metrics.Success)
 		fmt.Printf("rate of sent requests per second : %f\n", metrics.Rate)
 
 	}

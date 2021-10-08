@@ -1,5 +1,5 @@
 {
-    "enable_token_gen": true,
+    "enable_token_gen": false,
     "token_gen_attr":  {
         "url": "https://api-develop.quipper.net/v1/authorizations",
         "headers": {
@@ -16,10 +16,12 @@
     },
     "tergets": [
         {
-            "url": "https://httpbin.org/get"
+            "url": "https://httpbin.org/get",
+            "token": "some token"
         },
         {
             "url": "mockbin.org/request"
+            "token": "some token"
         }
     ],
     "output_filename": "plot.html"
